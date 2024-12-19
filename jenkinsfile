@@ -1,0 +1,50 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Clone Repository') {
+            steps {
+                git 'https://github.com/Reema-yadav/Wine_Prediction.git'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    sh '''
+                    docker build -t python-app .
+                    '''
+                }
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                script {
+                    sh '''
+                    docker run --rm python-app pytest tests/
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to Tomcat') {
+            steps {
+                script {
+                    sh '''
+                    docker cp main.py tomcat-server:/usr/local/tomcat/webapps/
+                    docker cp index.html tomcat-server:/usr/local/tomcat/webapps/
+                    '''
+                }
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                script {
+                    echo "Application deployed. Verify at http://localhost:8080"
+                }
+            }
+        }
+    }
+}
